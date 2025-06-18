@@ -242,7 +242,7 @@
         const apiKey = document.getElementById("apiKey").value;
         const secretKey = document.getElementById("secretKey").value;
     
-        fetch('http://localhost:5000/connect', {
+        fetch('https://robot-trading-xioleni.onrender.com/connect', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -274,12 +274,12 @@
       // Evento para notificar al servidor cuando la página se cierra o recarga
       window.addEventListener('beforeunload', function(event) {
         // Usamos navigator.sendBeacon que es la forma más fiable de enviar un último aviso
-        navigator.sendBeacon('http://localhost:5000/disconnect');
+        navigator.sendBeacon('https://robot-trading-xioleni.onrender.com/disconnect');
       });
     
       disconnectBtn.addEventListener("click", () => {
         // Notificar al backend
-        fetch('http://localhost:5000/disconnect', { method: 'POST' });
+        fetch('https://robot-trading-xioleni.onrender.com/disconnect', { method: 'POST' });
 
         // Actualizar la interfaz de usuario
         binanceStatus.textContent = "Desconectado";
@@ -316,7 +316,7 @@
       chatBox.scrollTop = chatBox.scrollHeight;
 
       // 4. Enviar el mensaje al backend
-      fetch('http://localhost:5000/chat', {
+      fetch('https://robot-trading-xioleni.onrender.com/chat', {
           method: 'POST',
           headers: {
               'Content-Type': 'application/json',
