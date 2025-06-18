@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel del Robot de Trading Xioleni</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(145deg, #0f172a, #1e293b);
+      font-family: 'Roboto Mono', monospace;
+      color: #f8fafc;
+      padding: 20px;
+    }
+    .panel {
+      background-color: #1e293b;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .info-box {
+      background-color: #334155;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    input[type=range] {
+      width: 100%;
+    }
+    .value-label {
+      font-size: 1.2em;
+      margin-left: 10px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .scrollable {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .status-text {
+      margin-left: 10px;
+      font-size: 1.2em;
+    }
+
+    /* === ESTILOS PARA EL CHAT DE LA IA === */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 400px; /* Altura total del contenedor del chat */
+      background-color: #0f172a;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .chat-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      border: 1px solid #334155;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-input {
+      display: flex;
+    }
+    #user-input {
+      flex-grow: 1;
+      background-color: #334155;
+      border: 1px solid #475569;
+      color: #f8fafc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-right: 10px;
+    }
+    #user-input::placeholder {
+      color: #94a3b8;
+    }
+    .chat-input button {
+      background-color: #3b82f6;
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .chat-input button:hover {
+      background-color: #2563eb;
+    }
+    .chat-messages p {
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 18px;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+    .user-message {
+      background-color: #3b82f6;
+      color: white;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    .ai-message {
+      background-color: #334155;
+      color: #f8fafc;
+      align-self: flex-start;
+    }
+    /* === FIN DE ESTILOS PARA EL CHAT === */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="text-center mb-4">🤖 Panel de Control - Robot Trading Xioleni</h1>
+
+    <div class="panel">
+      <div class="row">
+        <!-- Columna izquierda -->
+        <div class="col-md-6">
+          <div class="header-row">
+            <h4 class="mb-0">🔐 Conexión a Binance</h4>
+          </div>
+          <div class="info-box">
+            <div class="mb-3">
+              <label for="apiKey">API Key</label>
+              <input type="text" id="apiKey" class="form-control" placeholder="Ingresa tu API Key">
+            </div>
+            <div class="mb-3">
+              <label for="secretKey">Secret Key</label>
+              <input type="password" id="secretKey" class="form-control" placeholder="Ingresa tu Secret Key">
+            </div>
+            <div class="d-grid gap-2">
+              <button id="connectBtn" class="btn btn-success" type="button">Conectarme a Binance</button>
+              <button id="disconnectBtn" class="btn btn-secondary" type="button">Desconectarme</button>
+            </div>
+            <div id="connectionStatus" class="mt-3">
+              Estado: <strong id="binanceStatus" class="text-danger">Desconectado</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna derecha -->
+        <div class="col-md-6">
+          <div class="chat-container">
+            <div class="chat-messages" id="chat-box">
+              <p class="ai-message"><strong>IA:</strong> ¡Hola Xioleni! ¿En qué puedo ayudarte hoy con tu robot de trading?</p>
+            </div>
+            <div class="chat-input">
+              <input type="text" id="user-input" placeholder="ESCRIBE AQUÍ..." />
+              <button onclick="sendMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resto del panel (sin cambios) -->
+    <!-- Pegamos aquí desde tu mismo código el resto para no tocar diseño -->
+
+    <div class="panel grid-2">
+      <div>
+        <label>⏱️ Tiempo entre operaciones (en horas)</label>
+        <select class="form-select" id="time-interval">
+          <option value="1">1 hora</option>
+          <option value="2">2 horas</option>
+          <option value="3">3 horas</option>
+          <option value="4">4 horas</option>
+          <option value="5">5 horas</option>
+          <option value="6">6 horas</option>
+          <option value="7">7 horas</option>
+          <option value="8">8 horas</option>
+          <option value="9">9 horas</option>
+          <option value="10">10 horas</option>
+          <option value="12">12 horas</option>
+          <option value="24">24 horas</option>
+          <option value="999">Permanente</option>
+        </select>
+      </div>
+      <div>
+        <label>🔄 Operaciones por día</label>
+        <div class="d-flex align-items-center">
+          <input type="range" min="1" max="12" value="4" id="daily-ops">
+          <span class="value-label" id="daily-ops-value">4</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h4>💰 Resumen financiero</h4>
+      <div class="info-box">
+        <p>Capital Real Fiat y Spot: <strong id="capital-real">$0</strong></p>
+        <div id="saldo-container" class="mt-2"></div>
+        <p>Capital actual: <strong id="capital">$500</strong></p>
+        <p>Ganancia del día: <strong id="ganancia-dia">$0</strong></p>
+        <p>Pérdida del día: <strong id="perdida-dia">$0</strong></p>
+        <p>Ganancia semanal: <strong id="ganancia-semana">$0</strong></p>
+        <p>Pérdida semanal: <strong id="perdida-semana">$0</strong></p>
+        <p>Rango de ganancia: <strong id="rango-ganancia">-</strong></p>
+        <p>Rango de pérdida: <strong id="rango-perdida">-</strong></p>
+        <p>Modo de trabajo: <strong id="modo">Demo</strong></p>
+      </div>
+    </div>
+
+    <!-- Aquí seguirían los demás paneles que ya tenías (estado del análisis, historial, estrategias, etc.) -->
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const connectBtn = document.getElementById("connectBtn");
+      const disconnectBtn = document.getElementById("disconnectBtn");
+      const binanceStatus = document.getElementById("binanceStatus");
+      const saldoContainer = document.getElementById("saldo-container");
+      const capitalReal = document.getElementById("capital-real");
+    
+      // Permitir enviar mensaje con la tecla Enter
+      document.getElementById("user-input").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+          event.preventDefault(); // Evitar el comportamiento por defecto (ej. enviar formulario)
+          sendMessage();
+        }
+      });
+
+      connectBtn.addEventListener("click", () => {
+        const apiKey = document.getElementById("apiKey").value;
+        const secretKey = document.getElementById("secretKey").value;
+    
+        fetch('http://localhost:5000/connect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ api_key: apiKey, secret_key: secretKey })
+        })
+        .then(response => response.json())
+        .then(data => {
+          binanceStatus.textContent = data.message;
+          binanceStatus.classList.toggle("text-success", data.status === 'success');
+          binanceStatus.classList.toggle("text-danger", data.status !== 'success');
+    
+          if (data.status === 'success') {
+            saldoContainer.innerHTML = '';
+            let totalFiatSpot = 0;
+            for (const [asset, amount] of Object.entries(data.saldos)) {
+              saldoContainer.innerHTML += `<p>${asset}: ${amount}</p>`;
+              totalFiatSpot += amount; // Sumar al total
+            }
+            capitalReal.textContent = `$${totalFiatSpot.toFixed(2)}`; // Actualizar el capital real
+          }
+        })
+        .catch(error => {
+          binanceStatus.textContent = 'Error: ' + error;
+          binanceStatus.classList.add("text-danger");
+        });
+      });
+    
+      // Evento para notificar al servidor cuando la página se cierra o recarga
+      window.addEventListener('beforeunload', function(event) {
+        // Usamos navigator.sendBeacon que es la forma más fiable de enviar un último aviso
+        navigator.sendBeacon('http://localhost:5000/disconnect');
+      });
+    
+      disconnectBtn.addEventListener("click", () => {
+        // Notificar al backend
+        fetch('http://localhost:5000/disconnect', { method: 'POST' });
+
+        // Actualizar la interfaz de usuario
+        binanceStatus.textContent = "Desconectado";
+        binanceStatus.classList.remove("text-success");
+        binanceStatus.classList.add("text-danger");
+        saldoContainer.innerHTML = '';
+        capitalReal.textContent = '$0'; // Reiniciar el capital real
+      });
+    });
+
+    function sendMessage() {
+      const userInput = document.getElementById("user-input");
+      const chatBox = document.getElementById("chat-box");
+      const userText = userInput.value.trim();
+
+      if (userText === "") {
+        return; // No enviar mensajes vacíos
+      }
+
+      // 1. Mostrar el mensaje del usuario
+      const userMessageElem = document.createElement("p");
+      userMessageElem.textContent = userText;
+      userMessageElem.className = "user-message";
+      chatBox.appendChild(userMessageElem);
+      userInput.value = ""; // Limpiar input
+
+      // 2. Mostrar mensaje de "Pensando..." y obtener una referencia a él
+      const thinkingMessageElem = document.createElement("p");
+      thinkingMessageElem.innerHTML = "<strong>IA:</strong> Pensando...";
+      thinkingMessageElem.className = "ai-message";
+      chatBox.appendChild(thinkingMessageElem);
+
+      // 3. Scroll para ver los nuevos mensajes
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // 4. Enviar el mensaje al backend
+      fetch('http://localhost:5000/chat', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: userText }),
+      })
+      .then(response => response.json())
+      .then(data => {
+          // 5. Actualizar el mensaje "Pensando..." con la respuesta real de la IA
+          thinkingMessageElem.innerHTML = `<strong>IA:</strong> ${data.response}`;
+          // Scroll de nuevo por si la respuesta es larga
+          chatBox.scrollTop = chatBox.scrollHeight;
+      })
+      .catch((error) => {
+          console.error('Error:', error);
+          // 6. Mostrar un error en el chat si falla la comunicación
+          thinkingMessageElem.innerHTML = "<strong>IA:</strong> Error al conectar con el servidor. Revisa la consola (F12).";
+          chatBox.scrollTop = chatBox.scrollHeight;
+      });
+    }
+    </script>
+</body>
+</html>

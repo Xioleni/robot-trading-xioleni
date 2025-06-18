@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Vigilante de IP - Xioleni</title>
+  <style>
+    body { font-family: Verdana; background: #f9f9f9; padding: 20px; }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    }
+    .alerta { color: darkred; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>🔎 Monitoreo Automático de IP Pública</h2>
+    <p><strong>IP Actual:</strong> <span id="ipActual">Detectando...</span></p>
+    <p><strong>Cambios detectados:</strong> <span id="cambios">0</span></p>
+    <p><strong>Último cambio:</strong> <span id="ultimoCambio">--</span></p>
+    <p><strong>Patrón:</strong> <span id="patron">Analizando...</span></p>
+    <p class="alerta" id="mensajeCambio"></p>
+  </div>
+
+  <script>
+    let ipAnterior = localStorage.getItem('ipAnterior') || '';
+    let cambios = parseInt(localStorage.getItem('cambios')) || 0;
+    let historialCambios = JSON.parse(localStorage.getItem('historialCambios') || "[]");
+
+    document.getElementById('cambios').textContent = cambios;
+
+    // Solicitar permiso una sola vez al inicio si es necesario
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission().then();
+    }
+
+    function mostrarNotificacion(mensaje) {
+      if (Notification.permission === "granted") {
+        new Notification("🚨 IP CAMBIADA", {
+          body: mensaje,
+          icon: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Globe_icon.svg"
+        });
+      }
+    }
+
+    function segundosEntre(f1, f2) {
+      return Math.round((f2 - f1) / 1000);
+    }
+
+    function analizarPatron(historial) {
+      if (historial.length < 3) return "Muy pocos cambios";
+      let intervalos = [];
+      for (let i = 1; i < historial.length; i++) {
+        let t1 = new Date(historial[i - 1].hora);
+        let t2 = new Date(historial[i].hora);
+        intervalos.push(segundosEntre(t1, t2));
+      }
+      let promedio = intervalos.reduce((a, b) => a + b, 0) / intervalos.length;
+      if (intervalos.every(i => Math.abs(i - promedio) < 60)) {
+        return `Cambia cada ${Math.round(promedio / 60)} min (aprox.)`;
+      }
+      return "Cambio irregular";
+    }
+
+    function monitorearIP() {
+      fetch("https://api.ipify.org?format=json")
+        .then(res => res.json())
+        .then(data => {
+          const ipActual = data.ip;
+          const ahora = new Date();
+
+          document.getElementById("ipActual").textContent = ipActual;
+
+          if (ipAnterior && ipActual !== ipAnterior) {
+            cambios++;
+            historialCambios.push({ ip: ipActual, hora: ahora.toISOString() });
+            localStorage.setItem("historialCambios", JSON.stringify(historialCambios));
+            localStorage.setItem("cambios", cambios);
+            localStorage.setItem("ipAnterior", ipActual);
+
+            document.getElementById("cambios").textContent = cambios;
+            document.getElementById("ultimoCambio").textContent = ahora.toLocaleString();
+            document.getElementById("mensajeCambio").textContent = `⚠️ La IP cambió a: ${ipActual}`;
+
+            mostrarNotificacion(`Nueva IP detectada: ${ipActual}`);
+            document.getElementById("patron").textContent = analizarPatron(historialCambios);
+          }
+
+          ipAnterior = ipActual;
+          localStorage.setItem("ipAnterior", ipActual);
+        })
+        .catch(err => {
+          console.error("Error al verificar IP:", err);
+          document.getElementById("ipActual").textContent = "Error al obtener IP";
+        });
+    }
+
+    // Ejecutar al cargar
+    monitorearIP();
+
+    // Verificar cada minuto (60000 milisegundos)
+    setInterval(monitorearIP, 60000);
+  </script>
+</body>
+</html>
